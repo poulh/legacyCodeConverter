@@ -5,8 +5,8 @@ setup(
     version='1.0',
     description='Convert legacy code to a modern language using OpenAI API',
     author='Poul Hornsleth',
-    author_email='phornsleth@asquaredsoftware.com',
     packages=find_packages(),
+    license='MIT',
     install_requires=[
         'openai',
         'python-dotenv'

@@ -22,12 +22,8 @@ optional arguments:
                         Target language to convert to
 ```
 
-
+### Example
 ```shell
-python lcc.py --legacy-path <legacy_path> --output-path <output_path> --convert-to <target_language>
-```
-
-```shell
-python lcc.py --legacy-path legacy_examples/*.cpp --output-path <output_path> --convert-to <target_language>
+python lcc.py --legacy-path legacy_examples/*.cpp --output-path . --convert-to python
 ```
 
