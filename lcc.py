@@ -8,36 +8,64 @@ import re
 
 def get_common_file_extension(language):
     # Define a prompt to ask for the most common file extension for a programming language
-    prompt = f"What is the most common file extension for {language} programming language? Only return the letters that make up the file extension."
 
-    # Call the OpenAI API to get the common file extension
-    response = openai.Completion.create(
-        engine="text-davinci-003",  # You can adjust the engine based on your preference
-        prompt=prompt,
-        temperature=0,
+    system = (
+        "You are a helpful assistant that knows everything about programming languages "
+        "and their corresponding default file extensions."
+    )
+
+    prompt = (
+        f"What is the most common file extension for {language} programming language? Only return the "
+        f"letters of the file extension and nothing else."
+        f"that make up the file extension.")
+
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": prompt}
+    ]
+
+    client = openai.OpenAI(
+        # This is the default and can be omitted
+        api_key=os.environ.get("OPENAI_API_KEY"),
+    )
+
+    response = client.chat.completions.create(
+        messages=messages,
+        model="gpt-3.5-turbo-16k-0613",
+        temperature=0
     )
 
     # Extract and return the generated extension
-    extension = response.choices[0].text.strip()
+    extension = response.choices[0].message.content.strip()
     return extension.lower()
 
 
 def convert_legacy_to_modern(legacy_code, target_language):
     # Initialize a conversation with the prompt
-    conversation = [
+
+    prompt = (
+        f"Translate the following legacy code encased in triple backticks to"
+        f" {target_language}:\n\n```{legacy_code}```\n\nOnly return the converted code."
+    )
+
+    messages = [
         {"role": "system", "content": "You are a helpful assistant that translates code."},
-        {"role": "user", "content": f"Translate the following legacy code encased in triple backticks to {target_language}:\n\n```{legacy_code}```\n\nOnly return the converted code."}
+        {"role": "user",
+         "content": prompt}
     ]
 
-    # Call the OpenAI API with the Chat Completion model
-    response = openai.ChatCompletion.create(
+    client = openai.OpenAI(
+        # This is the default and can be omitted
+        api_key=os.environ.get("OPENAI_API_KEY"),
+    )
+
+    chat_completion = client.chat.completions.create(
+        messages=messages,
         model="gpt-3.5-turbo-16k-0613",
-        messages=conversation,
-        temperature=0
     )
 
     # Extract and return the assistant's reply (generated code)
-    assistant_reply = response.choices[0].message["content"]
+    assistant_reply = chat_completion.choices[0].message.content
 
     # Remove surrounding triple backticks and language identifier
     code_lines = re.search(r'```[^\n]*\n([\s\S]+?)```', assistant_reply, re.MULTILINE).group(1)
@@ -57,7 +85,6 @@ def main():
     dotenv.load_dotenv()
 
     # Access the API key from the environment variables
-    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     # Find all matching files using glob pattern
     legacy_files = glob.glob(args.legacy_path)
