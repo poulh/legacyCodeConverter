@@ -50,8 +50,7 @@ def convert_legacy_to_modern(legacy_code, target_language):
 
     messages = [
         {"role": "system", "content": "You are a helpful assistant that translates code."},
-        {"role": "user",
-         "content": prompt}
+        {"role": "user","content": prompt}
     ]
 
     client = openai.OpenAI(
@@ -59,13 +58,34 @@ def convert_legacy_to_modern(legacy_code, target_language):
         api_key=os.environ.get("OPENAI_API_KEY"),
     )
 
+    schema_data = {
+        "type": "object",
+        "description": "an object that holds the code",
+        "properties": {
+            "code": {
+                "type": "string",
+                "description": "the translated source code"
+            },
+            "language": {
+                "type": "string",
+                "description": "the language the  translated source code is in"
+            }
+        },
+        "required": ["code", "language"]
+    }
+
     chat_completion = client.chat.completions.create(
         messages=messages,
         model="gpt-3.5-turbo-16k-0613",
+        functions=[{"name": "default_func", "parameters": schema_data}],
+        function_call={"name": "default_func"}
     )
 
     # Extract and return the assistant's reply (generated code)
-    assistant_reply = chat_completion.choices[0].message.content
+    assistant_reply = chat_completion.choices[0].message.function_call.arguments
+    from pprint import pprint
+    pprint(assistant_reply)
+    exit()
 
     # Remove surrounding triple backticks and language identifier
     code_lines = re.search(r'```[^\n]*\n([\s\S]+?)```', assistant_reply, re.MULTILINE).group(1)
